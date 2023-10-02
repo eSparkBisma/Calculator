@@ -1,8 +1,15 @@
 import React from 'react';
 import {View} from 'react-native';
 import IconButton from './IconButton';
+import {Theme} from '../themes/dark';
+import {State} from '@hookstate/core';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onMenuPress: () => void;
+  onSqrtPress: () => void;
+  theme: State<Theme, {}>;
+}
+const Header: React.FC<HeaderProps> = ({onMenuPress, onSqrtPress, theme}) => {
   return (
     <View
       style={{
@@ -15,13 +22,15 @@ const Header: React.FC = () => {
         source={require('../icons/sqrt.png')}
         width={25}
         height={25}
-        onPress={() => console.log('sqrt pressed')}
+        onPress={onSqrtPress}
+        color={theme.headerIcon.value}
       />
       <IconButton
         source={require('../icons/menu.png')}
         width={25}
         height={25}
-        onPress={() => console.log('menu button pressed')}
+        onPress={onMenuPress}
+        color={theme.headerIcon.value}
       />
     </View>
   );
