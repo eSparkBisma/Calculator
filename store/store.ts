@@ -63,6 +63,7 @@ const buttonStore = hookstate({
       {
         type: 'operation',
         iconName: 'equals',
+        isPressed: false,
         operation: '=',
         iconLibrary: 'FontAwesome6',
       },

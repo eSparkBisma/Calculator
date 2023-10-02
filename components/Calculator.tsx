@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 import darkTheme, {Theme} from '../themes/dark';
 import lightTheme from '../themes/light';
@@ -126,6 +126,18 @@ const Calculator: React.FC = () => {
   //   }
   // };
 
+  useEffect(() => {
+    console.log('butons', buttons.get());
+  }, [buttons]);
+
+  const handleClear = (index: number, bt?: string) => {
+    if (bt == '=') {
+      const temp = [...buttons.get()];
+      temp[index].isPressed! = true;
+      buttons.set([...temp]);
+    }
+  };
+
   return (
     <View
       style={{
@@ -248,6 +260,7 @@ const Calculator: React.FC = () => {
                       const operation =
                         button?.operation || button?.label || '';
                       handleOperation(operation);
+                      handleClear(index, button.operation);
                     }
                   }}
                 />
