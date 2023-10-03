@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {View, Text, TouchableOpacity, TextInput} from 'react-native';
 import darkTheme, {Theme} from '../themes/dark';
 import lightTheme from '../themes/light';
@@ -49,17 +49,61 @@ const Calculator: React.FC = () => {
       try {
         let result = '';
         let expressionToEvaluate = inputValueState.value;
+        var pattern = /\d+√\d+/;
+        const sqrtPattern = /√(\d+(\.\d+)?)/g;
 
-        expressionToEvaluate = expressionToEvaluate.replace(
-          /√(\d+(\.\d+)?)/g,
-          (_, num) => {
-            const operand = parseFloat(num);
-            if (!isNaN(operand)) {
-              return Math.sqrt(operand).toString();
-            }
-            return 'NaN';
-          },
-        );
+        while (pattern.test(expressionToEvaluate)) {
+          expressionToEvaluate = expressionToEvaluate.replace(
+            /(\d+(\.\d+)?)√(\d+(\.\d+)?)/g,
+            (_, num1, __, num2) => {
+              const operand1 = parseFloat(num1);
+              const operand2 = parseFloat(num2);
+              if (!isNaN(operand1) && !isNaN(operand2)) {
+                return (operand1 * Math.sqrt(operand2)).toString();
+              }
+              return 'NaN';
+            },
+          );
+        }
+
+        while (sqrtPattern.test(expressionToEvaluate)) {
+          expressionToEvaluate = expressionToEvaluate.replace(
+            /√(\d+(\.\d+)?)/g,
+            (_, num) => {
+              const operand = parseFloat(num);
+              if (!isNaN(operand)) {
+                return Math.sqrt(operand).toString();
+              }
+              return 'NaN';
+            },
+          );
+        }
+
+        // if (pattern.test(expressionToEvaluate)) {
+        //   expressionToEvaluate = expressionToEvaluate.replace(
+        //     /(\d+(\.\d+)?)√(\d+(\.\d+)?)/g,
+        //     (_, num1, __, num2) => {
+        //       const operand1 = parseFloat(num1);
+        //       const operand2 = parseFloat(num2);
+        //       if (!isNaN(operand1) && !isNaN(operand2)) {
+        //         return (operand1 * Math.sqrt(operand2)).toString();
+        //       }
+        //       return 'NaN';
+        //     },
+        //   );
+        // } else {
+        //   expressionToEvaluate = expressionToEvaluate.replace(
+        //     /√(\d+(\.\d+)?)/g,
+        //     (_, num) => {
+        //       const operand = parseFloat(num);
+        //       if (!isNaN(operand)) {
+        //         return Math.sqrt(operand).toString();
+        //       }
+        //       return 'NaN';
+        //     },
+        //   );
+        // }
+
         result = eval(expressionToEvaluate).toString();
 
         historyState.set('');
@@ -77,7 +121,7 @@ const Calculator: React.FC = () => {
       } catch (error) {
         console.error(error);
       }
-    } else {
+    } else if (operation !== 'bckspc') {
       inputValueState.set(prevValue => prevValue + operation);
     }
   };
