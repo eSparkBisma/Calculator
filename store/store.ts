@@ -63,11 +63,15 @@ const buttonStore = hookstate({
       {
         type: 'operation',
         iconName: 'equals',
-        isPressed: false,
         operation: '=',
         iconLibrary: 'FontAwesome6',
       },
-    
-]});
+],
+      equalsPressed: false, 
+      sqrt :{
+        type: "operation",
+        operation: "√"
+      }
+});
 
 export default buttonStore;

@@ -6,10 +6,10 @@ import {State} from '@hookstate/core';
 
 interface HeaderProps {
   onMenuPress: () => void;
-  onSqrtPress: () => void;
+  onPress: () => void;
   theme: State<Theme, {}>;
 }
-const Header: React.FC<HeaderProps> = ({onMenuPress, onSqrtPress, theme}) => {
+const Header: React.FC<HeaderProps> = ({onMenuPress, onPress, theme}) => {
   return (
     <View
       style={{
@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({onMenuPress, onSqrtPress, theme}) => {
         source={require('../icons/sqrt.png')}
         width={25}
         height={25}
-        onPress={onSqrtPress}
+        onPress={onPress}
         color={theme.headerIcon.value}
       />
       <IconButton

@@ -16,6 +16,7 @@ const Calculator: React.FC = () => {
   const buttons = useHookstate(buttonStore.buttons);
   const inputValueState = useHookstate<string>('');
   const historyState = useHookstate<string>('');
+  const equalsPressed = useHookstate<boolean>(buttonStore.equalsPressed);
 
   const handleThemeChange = (themeName: string) => {
     switch (themeName) {
@@ -37,32 +38,33 @@ const Calculator: React.FC = () => {
     isMenuOpen.set(false);
   };
 
-  const handleSqrtPress = () => {
-    inputValueState.value.length > 11
-      ? inputValueState.set(inputValueState.value.substring(0, 11))
-      : inputValueState.value;
-    try {
-      const result = Math.sqrt(parseFloat(inputValueState.value));
-      inputValueState.set(result.toString());
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleOperation = (operation: string) => {
     inputValueState.value.length > 11
       ? inputValueState.set(inputValueState.value.substring(0, 11))
       : inputValueState.value;
-
     if (operation === 'c') {
       inputValueState.set('');
       historyState.set('');
     } else if (operation === '=') {
       try {
-        const result = eval(inputValueState.value);
+        let result = '';
+        let expressionToEvaluate = inputValueState.value;
+
+        expressionToEvaluate = expressionToEvaluate.replace(
+          /√(\d+(\.\d+)?)/g,
+          (_, num) => {
+            const operand = parseFloat(num);
+            if (!isNaN(operand)) {
+              return Math.sqrt(operand).toString();
+            }
+            return 'NaN';
+          },
+        );
+        result = eval(expressionToEvaluate).toString();
+
         historyState.set('');
         historyState.set(`${historyState.value}${inputValueState.value}`);
-        inputValueState.set(result.toString());
+        inputValueState.set(result);
       } catch (error) {
         console.error(error);
       }
@@ -80,61 +82,23 @@ const Calculator: React.FC = () => {
     }
   };
 
-  // const handleOperation = (operation: string) => {
-  //   inputValueState.value.length > 11
-  //     ? inputValueState.set(inputValueState.value.substring(0, 11))
-  //     : inputValueState.value;
-
-  //   if (historyState.value) {
-  //     // Check if the new value is a number
-  //     if (/^-?\d*\.?\d+$/.test(operation)) {
-  //       inputValueState.set(operation);
-  //     } else {
-  //       try {
-  //         const prevResult = eval(historyState.value);
-  //         const result = eval(`${prevResult} ${operation}`);
-  //         inputValueState.set(result.toString());
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //     }
-  //     historyState.set('');
-  //   } else {
-  //     if (operation === 'c') {
-  //       inputValueState.set('');
-  //       historyState.set('');
-  //     } else if (operation === '=') {
-  //       try {
-  //         const result = eval(inputValueState.value);
-  //         historyState.set(`${historyState.value}${inputValueState.value}`);
-  //         inputValueState.set(result.toString());
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //     } else if (operation === 'bckspc' && inputValueState.value.length > 0) {
-  //       inputValueState.set(prevValue => prevValue.slice(0, -1));
-  //     } else if (operation === '%') {
-  //       try {
-  //         const result = eval(inputValueState.value) / 100;
-  //         inputValueState.set(result.toString());
-  //       } catch (error) {
-  //         console.error(error);
-  //       }
-  //     } else {
-  //       inputValueState.set(prevValue => prevValue + operation);
-  //     }
-  //   }
-  // };
-
-  useEffect(() => {
-    console.log('butons', buttons.get());
-  }, [buttons]);
-
-  const handleClear = (index: number, bt?: string) => {
-    if (bt == '=') {
-      const temp = [...buttons.get()];
-      temp[index].isPressed! = true;
-      buttons.set([...temp]);
+  const handleClear = (
+    bOps?: string,
+    bType?: 'number' | 'operation',
+    bValue?: number,
+  ): void => {
+    if (equalsPressed.get() && bType === 'operation') {
+      equalsPressed.set(false);
+    }
+    if (equalsPressed.get() && bType === 'number') {
+      const inputValue = inputValueState.value.toString();
+      console.log('input value now', inputValue);
+      inputValueState.set(bValue?.toString() || '');
+      equalsPressed.set(false);
+    } else if (!equalsPressed.get()) {
+      if (bOps == '=') {
+        equalsPressed.set(true);
+      }
     }
   };
 
@@ -148,7 +112,10 @@ const Calculator: React.FC = () => {
       <Header
         theme={theme}
         onMenuPress={() => isMenuOpen.set(!isMenuOpen.get())}
-        onSqrtPress={handleSqrtPress}
+        onPress={() => {
+          equalsPressed.set(false);
+          handleOperation('√');
+        }}
       />
       {isMenuOpen.get() && (
         <View
@@ -260,7 +227,7 @@ const Calculator: React.FC = () => {
                       const operation =
                         button?.operation || button?.label || '';
                       handleOperation(operation);
-                      handleClear(index, button.operation);
+                      handleClear(button.operation, button.type, button.value);
                     }
                   }}
                 />
