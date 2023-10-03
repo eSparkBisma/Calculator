@@ -1,150 +1,34 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, TextInput} from 'react-native';
-import darkTheme, {Theme} from '../themes/dark';
-import lightTheme from '../themes/light';
-import nightShadeTheme from '../themes/night';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
 import {useHookstate} from '@hookstate/core';
 import Header from './Header';
 import {OperationButton} from './OperationButton';
 import buttonStore from '../store/store';
-import {StyleSheet} from 'react-native';
+import {
+  handleClear,
+  handleOperation,
+  handleThemeChange,
+  useEqualsPressedHook,
+  useHistoryHook,
+  useInputValueHook,
+  useMenuOpenHook,
+  useThemeHook,
+} from '../utils/functions';
 
 const Calculator: React.FC = () => {
-  const theme = useHookstate<Theme>(darkTheme);
-  const isMenuOpen = useHookstate(false);
+  const theme = useThemeHook();
+  const isMenuOpen = useMenuOpenHook();
+  const inputValueState = useInputValueHook();
+  const historyState = useHistoryHook();
+  const equalsPressed = useEqualsPressedHook();
   const themes = ['dark', 'light', 'nightShade'];
   const buttons = useHookstate(buttonStore.buttons);
-  const inputValueState = useHookstate<string>('');
-  const historyState = useHookstate<string>('');
-  const equalsPressed = useHookstate<boolean>(buttonStore.equalsPressed);
-
-  const handleThemeChange = (themeName: string) => {
-    switch (themeName) {
-      case 'dark':
-        theme.set(darkTheme);
-        console.log(theme.name.value);
-        break;
-      case 'light':
-        theme.set(lightTheme);
-        console.log(theme.name.value);
-        break;
-      case 'nightShade':
-        theme.set(nightShadeTheme);
-        console.log(theme.name.value);
-        break;
-      default:
-        break;
-    }
-    isMenuOpen.set(false);
-  };
-
-  const handleOperation = (operation: string) => {
-    inputValueState.value.length > 11
-      ? inputValueState.set(inputValueState.value.substring(0, 11))
-      : inputValueState.value;
-    if (operation === 'c') {
-      inputValueState.set('');
-      historyState.set('');
-    } else if (operation === '=') {
-      try {
-        let result = '';
-        let expressionToEvaluate = inputValueState.value;
-        var pattern = /\d+√\d+/;
-        const sqrtPattern = /√(\d+(\.\d+)?)/g;
-
-        while (pattern.test(expressionToEvaluate)) {
-          expressionToEvaluate = expressionToEvaluate.replace(
-            /(\d+(\.\d+)?)√(\d+(\.\d+)?)/g,
-            (_, num1, __, num2) => {
-              const operand1 = parseFloat(num1);
-              const operand2 = parseFloat(num2);
-              if (!isNaN(operand1) && !isNaN(operand2)) {
-                return (operand1 * Math.sqrt(operand2)).toString();
-              }
-              return 'NaN';
-            },
-          );
-        }
-
-        while (sqrtPattern.test(expressionToEvaluate)) {
-          expressionToEvaluate = expressionToEvaluate.replace(
-            /√(\d+(\.\d+)?)/g,
-            (_, num) => {
-              const operand = parseFloat(num);
-              if (!isNaN(operand)) {
-                return Math.sqrt(operand).toString();
-              }
-              return 'NaN';
-            },
-          );
-        }
-
-        // if (pattern.test(expressionToEvaluate)) {
-        //   expressionToEvaluate = expressionToEvaluate.replace(
-        //     /(\d+(\.\d+)?)√(\d+(\.\d+)?)/g,
-        //     (_, num1, __, num2) => {
-        //       const operand1 = parseFloat(num1);
-        //       const operand2 = parseFloat(num2);
-        //       if (!isNaN(operand1) && !isNaN(operand2)) {
-        //         return (operand1 * Math.sqrt(operand2)).toString();
-        //       }
-        //       return 'NaN';
-        //     },
-        //   );
-        // } else {
-        //   expressionToEvaluate = expressionToEvaluate.replace(
-        //     /√(\d+(\.\d+)?)/g,
-        //     (_, num) => {
-        //       const operand = parseFloat(num);
-        //       if (!isNaN(operand)) {
-        //         return Math.sqrt(operand).toString();
-        //       }
-        //       return 'NaN';
-        //     },
-        //   );
-        // }
-
-        result = eval(expressionToEvaluate).toString();
-
-        historyState.set('');
-        historyState.set(`${historyState.value}${inputValueState.value}`);
-        inputValueState.set(result);
-      } catch (error) {
-        console.error(error);
-      }
-    } else if (operation === 'bckspc' && inputValueState.value.length > 0) {
-      inputValueState.set(prevValue => prevValue.slice(0, -1));
-    } else if (operation === '%') {
-      try {
-        const result = eval(inputValueState.value) / 100;
-        inputValueState.set(result.toString());
-      } catch (error) {
-        console.error(error);
-      }
-    } else if (operation !== 'bckspc') {
-      inputValueState.set(prevValue => prevValue + operation);
-    }
-  };
-
-  const handleClear = (
-    bOps?: string,
-    bType?: 'number' | 'operation',
-    bValue?: number,
-  ): void => {
-    if (equalsPressed.get() && bType === 'operation') {
-      equalsPressed.set(false);
-    }
-    if (equalsPressed.get() && bType === 'number') {
-      const inputValue = inputValueState.value.toString();
-      console.log('input value now', inputValue);
-      inputValueState.set(bValue?.toString() || '');
-      equalsPressed.set(false);
-    } else if (!equalsPressed.get()) {
-      if (bOps == '=') {
-        equalsPressed.set(true);
-      }
-    }
-  };
 
   return (
     <View
@@ -158,7 +42,7 @@ const Calculator: React.FC = () => {
         onMenuPress={() => isMenuOpen.set(!isMenuOpen.get())}
         onPress={() => {
           equalsPressed.set(false);
-          handleOperation('√');
+          handleOperation('√', inputValueState, historyState, equalsPressed);
         }}
       />
       {isMenuOpen.get() && (
@@ -175,7 +59,7 @@ const Calculator: React.FC = () => {
             <TouchableOpacity
               key={index}
               onPress={() => {
-                handleThemeChange(themeName);
+                handleThemeChange(themeName, theme, isMenuOpen);
               }}
               style={{padding: 10}}>
               <Text
@@ -270,8 +154,19 @@ const Calculator: React.FC = () => {
                     ) {
                       const operation =
                         button?.operation || button?.label || '';
-                      handleOperation(operation);
-                      handleClear(button.operation, button.type, button.value);
+                      handleOperation(
+                        operation,
+                        inputValueState,
+                        historyState,
+                        equalsPressed,
+                      );
+                      handleClear(
+                        button.operation,
+                        button.type,
+                        button.value,
+                        equalsPressed,
+                        inputValueState,
+                      );
                     }
                   }}
                 />
